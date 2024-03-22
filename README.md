@@ -30,7 +30,7 @@ Struktur Repository Seperti Berikut:
 	— Register.sh
 				
 —soal_3:
-  — awal.sh
+  	— awal.sh
 	— search.sh
 				
 —soal_4:
