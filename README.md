@@ -23,10 +23,10 @@ Kelompok IT13 juga telah menyelesaikan tugas praktikum modul 1 yang telah diberi
 Struktur Repository Seperti Berikut:
 ```
 —soal_1:
-  — Sandbox.sh
+  	— Sandbox.sh
                                     
 —soal_2:
-  — Login.sh
+  	— Login.sh
 	— Register.sh
 				
 —soal_3:
