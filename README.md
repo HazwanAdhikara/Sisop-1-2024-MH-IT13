@@ -15,6 +15,7 @@ Kelompok IT13 melakukan pengerjaan modul 1 ini dengan pembagian sebagai berikut:
   + Soal 2 dikerjakan oleh Muhamad Arrayyan 
   + Soal 3 dikerjakan oleh Muhammad Andrean Rizq Prasetio; dan
   + Soal 4 dikerjakan oleh Hazwan Adhikara Nasution
+
 Sehingga dengan demikian, Pembagian bobot pengerjaan soal menjadi (Rayyan 30%, Hazwan 40%, Andre 30%).
 
 Kelompok IT13 juga telah menyelesaikan tugas praktikum modul 1 yang telah diberikan dan telah melakukan demonstrasi kepada Asisten lab. Dari hasil praktikum yang telah dilakukan sebelumnya, maka diperoleh hasil sebagaimana yang dituliskan pada setiap bab di bawah ini.
