@@ -8,14 +8,14 @@
 |Muhammad Andrean Rizq Prasetio     | 5027231052 |
 
 ## Pengantar
-Laporan resmi ini dibuat terkait dengan praktikum modul 1 sistem operasi yang telah dilaksanakan pada tanggal xx hingga tanggal xx. Praktikum modul 1 terdiri dari 4 soal yang dikerjakan oleh kelompok praktikan yang terdiri dari 3 orang selama waktu tertentu.
+Laporan resmi ini dibuat terkait dengan praktikum modul 1 sistem operasi yang telah dilaksanakan pada tanggal 20 Maret 2024 hingga tanggal 30 Maret 2024. Praktikum modul 1 terdiri dari 4 soal yang dikerjakan oleh kelompok praktikan yang terdiri dari 3 orang selama waktu tertentu.
 
 Kelompok IT13 melakukan pengerjaan modul 1 ini dengan pembagian sebagai berikut:
   + Soal 1 dikerjakan oleh Hazwan Adhikara Nasution
   + Soal 2 dikerjakan oleh Muhamad Arrayyan 
   + Soal 3 dikerjakan oleh Muhammad Andrean Rizq Prasetio; dan
-  + Soal 4 dikerjakan bersama oleh (Hazwan XX%, Rayyan XX%, Andre XX%)
-Sehingga dengan demikian, semua anggota kelompok memiliki peran yang sama besar dalam pengerjaan modul 1 ini.
+  + Soal 4 dikerjakan oleh Hazwan Adhikara Nasution
+Sehingga dengan demikian, Pembagian bobot pengerjaan soal menjadi (Rayyan 30%, Hazwan 40%, Andre 30%).
 
 Kelompok IT13 juga telah menyelesaikan tugas praktikum modul 1 yang telah diberikan dan telah melakukan demonstrasi kepada Asisten lab. Dari hasil praktikum yang telah dilakukan sebelumnya, maka diperoleh hasil sebagaimana yang dituliskan pada setiap bab di bawah ini.
 
