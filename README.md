@@ -876,13 +876,193 @@ chmod 600 /home/$(whoami)/sisop/modul1/soal4/log/hour/metrics_agg${datetime}.log
 
 # mencetak metrik tiap menit pada crontab -e
 # 0 * * * * /home/zwaneee/sisop/modul1/soal4/log/hour/aggregate_minutes_to_hourly_log.sh
-
-
 ```
 
 #### > Penjelasan
+Pada soal, kami diminta untuk membuat program monitoring resource pada PC untuk RAM dan Size suatu directory dengan menggunakan `free -m` untuk RAM dan `du -sh` untuk disk.
+
+- Masukkan semua metrics ke dalam suatu file log bernama metrics_{YmdHms}.log. {YmdHms} adalah waktu disaat file script bash kalian dijalankan. Misal dijalankan pada 2024-03-20 15:00:00, maka file log yang akan tergenerate adalah metrics_20240320150000.log. Untuk menyelesaikan poin tersebut, yang kita lakukan adalah mengisi ini yaitu membuat shell script bernama `minute_log.sh` lalu mengisinya dengan:
+```
+#!/bin/bash
+
+datetime=$(date "+%Y%m%d%H%M%S")
+
+metrics=$(free -m | awk 'NR==2 {printf "%s,%s,%s,%s,%s,%s", $2, $3, $4, $5, $6, $7}')
+
+path="/home/$(whoami)/sisop/modul1/soal4/log/minute/"
+path_size=$(du -sh $path | awk '{print $1}')
+
+swap_total=$(free | awk 'NR==3 {print $2}')
+swap_used=$(free | awk 'NR==3 {print $3}')
+swap_free=$(free | awk 'NR==3 {print $4}')
+
+echo "$metrics,$swap_total,$swap_used,$swap_free,$path,$path_size" > /home/$(whoami)/sisop/modul1/soal4/log/minute/metrics_${datetime}.log
+
+chmod 600 /home/$(whoami)/sisop/modul1/soal4/log/minute/metrics_${datetime}.log
+```
+1. **Menetapkan Tanggal dan Waktu:**
+    - `datetime=$(date "+%Y%m%d%H%M%S")`
+    - Baris ini menggunakan perintah `date` untuk mendapatkan tanggal dan waktu saat ini dalam format `YYYYMMDDHHMMSS`. Hasilnya disimpan dalam variabel `datetime`.
+
+2. **Mengumpulkan Metrik Sistem:**
+    - `metrics=$(free -m | awk 'NR==2 {printf "%s,%s,%s,%s,%s,%s", $2, $3, $4, $5, $6, $7}')`
+    - Perintah `free -m` mengambil statistik penggunaan memori dalam megabita.
+    - Perintah `awk` memproses baris kedua output (yang berisi data penggunaan memori aktual) dan mencetak bidang-bidang tertentu (total memori, memori terpakai, memori bebas, memori bersama, memori buffer, dan memori cache) yang dipisahkan oleh koma. Hasilnya disimpan dalam variabel `metrics`.
+
+3. **Menetapkan Jalur Log:**
+    - `path="/home/$(whoami)/sisop/modul1/soal4/log/minute/"`
+    - Baris ini mendefinisikan jalur di mana file log akan disimpan. Ini mencakup direktori rumah pengguna saat ini dan struktur direktori yang spesifik.
+
+4. **Menghitung Ukuran Jalur:**
+    - `path_size=$(du -sh $path | awk '{print $1}')`
+    - Perintah `du -sh` menghitung total ukuran direktori yang ditentukan (`$path`) dalam format yang mudah dibaca manusia (misalnya "10M" untuk 10 megabita).
+    - Perintah `awk` mengekstrak nilai ukuran (bidang pertama) dari output `du` dan menyimpannya dalam variabel `path_size`.
+
+5. **Mengumpulkan Informasi Ruang Swap:**
+    - `swap_total=$(free | awk 'NR==3 {print $2}')`
+    - `swap_used=$(free | awk 'NR==3 {print $3}')`
+    - `swap_free=$(free | awk 'NR==3 {print $4}')`
+    - Baris-baris ini menggunakan perintah `free` untuk mengambil informasi tentang ruang swap (memori virtual).
+    - Perintah `awk` mengekstrak nilai-nilai yang relevan (total ruang swap, ruang swap terpakai, dan ruang swap bebas) dari baris ketiga output `free` dan mengassignnya ke variabel yang sesuai.
+
+6. **Membuat dan Menulis ke File Log:**
+    - `echo "$metrics,$swap_total,$swap_used,$swap_free,$path,$path_size" > /home/$(whoami)/sisop/modul1/soal4/log/minute/metrics_${datetime}.log`
+    - Baris ini menggabungkan entri log dengan menggabungkan metrik yang dikumpulkan, informasi ruang swap, jalur, dan ukuran jalur.
+    - String hasilnya ditulis ke file log bernama `metrics_<datetime>.log`, di mana `<datetime>` mewakili tanggal dan waktu saat ini.
+
+- Script untuk mencatat metrics diatas diharapkan dapat berjalan otomatis pada setiap menit. Untuk mengerjakan poin ini, kami melakukan crontab lalu melakukan konfigurasi.
+```
+crontab -e
+* * * * * /home/zwaneee/sisop/modul1/soal4/log/minute/minute_log.sh
+```
+`Kami melakukan hal tersebut adalah untuk membuat script minute_log.sh akan berjalan otomatis setiap menitnya atau dalam artian lain, akan mencetak file.log yang diminta soal setiap menit.`
+
+- Kemudian, buat satu script untuk membuat agregasi file log ke satuan jam. Script agregasi akan memiliki info dari file-file yang tergenerate tiap menit. Dalam hasil file agregasi tersebut, terdapat nilai minimum, maximum, dan rata-rata dari tiap-tiap metrics. File agregasi akan ditrigger untuk dijalankan setiap jam secara otomatis. Berikut contoh nama file hasil agregasi metrics_agg_2024032015.log dengan format metrics_agg_{YmdH}.log
+```
+#!/bin/bash
+
+datetime=$(date "+%Y%m%d%H")
+
+log_directory="/home/$(whoami)/sisop/modul1/soal4/log/minute/"
+output_directory="/home/$(whoami)/sisop/modul1/soal4/log/hour/"
+
+# bikin array untuk tempat ngisi log
+declare -a dir_sizes=()
+
+# loop untuk isi log selama 1 jam
+for logfile in $(find $log_directory -type f -mmin -60 -name "metrics_*.log"); do
+    while IFS=, read -r mem_total mem_used mem_free mem_shared mem_buff mem_available swap_total swap_used swap_free path path_size; do
+        dir_sizes+=("$mem_total,$mem_used,$mem_free,$mem_shared,$mem_buff,$mem_available,$swap_total,$swap_used,$swap_free,$path,$path_size")
+    done < "$logfile"
+done
+
+sorted_sizes=($(printf "%s\n" "${dir_sizes[@]}" | sort -t',' -k11,11))
+min_size="${sorted_sizes[0]}"
+max_size="${sorted_sizes[-1]}"
+
+IFS=',' read -r -a min_arr <<< "$min_size"
+IFS=',' read -r -a max_arr <<< "$max_size"
+avg_arr=()
+
+for ((i=0; i<${#min_arr[@]}-2; i++)); do
+    avg_val=$(echo "scale=2; (${min_arr[$i]} + ${max_arr[$i]}) / 2" | bc)
+    # cek apakah hasilnya integer
+    if [[ $avg_val =~ ^[0-9]+(\.0+)?$ ]]; then
+        avg_arr+=("${avg_val%.*}")
+    else
+        avg_arr+=("$avg_val")
+    fi
+done
+
+avg_arr+=("${min_arr[-2]}")
+
+# buat ngitung sama bikin format path_size secara terpisah
+min_path_size=${min_arr[-1]%K}
+max_path_size=${max_arr[-1]%K}
+avg_path_size=$(echo "scale=2; ($min_path_size + $max_path_size) / 2" | bc)
+if [[ $avg_path_size =~ ^[0-9]+(\.0+)?$ ]]; then
+    avg_path_size="${avg_path_size%.*}K" # menghapus .0 lalu ditambahkan K
+else
+    avg_path_size="${avg_path_size}K"
+fi
+avg_arr+=("$avg_path_size")
+
+avg_line="average"
+for val in "${avg_arr[@]}"; do
+    avg_line+=",${val}"
+done
+
+output_file="$output_directory/metrics_agg_${datetime}.log"
+
+echo "minimum,$min_size" > "$output_file"
+echo "maximum,$max_size" >> "$output_file"
+echo "$avg_line" >> "$output_file"
+
+chmod 600 /home/$(whoami)/sisop/modul1/soal4/log/hour/metrics_agg${datetime}.log
+```
+
+1. **Menetapkan Tanggal dan Waktu:**
+    - `datetime=$(date "+%Y%m%d%H")`
+    - Baris ini menggunakan perintah `date` untuk mendapatkan tanggal dan waktu saat ini dalam format `YYYYMMDDHH`. Hasilnya disimpan dalam variabel `datetime`.
+
+2. **Menetapkan Direktori Log:**
+    - `log_directory="/home/$(whoami)/sisop/modul1/soal4/log/minute/"`
+    - Baris ini mendefinisikan jalur di mana file log per menit akan disimpan.
+
+3. **Menetapkan Direktori Output:**
+    - `output_directory="/home/$(whoami)/sisop/modul1/soal4/log/hour/"`
+    - Baris ini mendefinisikan jalur di mana file log agregat per jam akan disimpan.
+
+4. **Mengumpulkan Data Log:**
+    - Kita mencari semua file log yang sesuai dengan pola "metrics_*.log" dalam direktori log per menit.
+    - Setiap baris dalam file log berisi informasi tentang penggunaan memori, ruang swap, dan ukuran direktori.
+    - Data-data ini disimpan dalam array `dir_sizes`.
+
+5. **Mengurutkan Ukuran Direktori:**
+    - Array `dir_sizes` diurutkan berdasarkan ukuran direktori (kolom ke-11).
+    - Nilai terkecil dan terbesar disimpan dalam variabel `min_size` dan `max_size`.
+
+6. **Menghitung Rata-rata:**
+    - Kita menghitung rata-rata dari setiap kolom (kecuali path size) antara nilai terkecil dan terbesar.
+    - Jika hasilnya bilangan bulat, kita hapus desimalnya.
+    - Hasil rata-rata disimpan dalam array `avg_arr`.
+
+7. **Menghitung Ukuran Path Rata-rata:**
+    - Kita menghitung rata-rata ukuran path (dalam kilobita) antara nilai terkecil dan terbesar.
+    - Jika hasilnya bilangan bulat, kita tambahkan "K" di akhirnya.
+    - Hasil ukuran path rata-rata disimpan dalam variabel `avg_path_size`.
+
+8. **Menyusun Baris Hasil Rata-rata:**
+    - Kita menggabungkan semua nilai rata-rata dalam satu baris dengan memisahkannya dengan koma.
+    - Baris ini disimpan dalam variabel `avg_line`.
+
+9. **Menyimpan Hasil ke File Output:**
+    - Hasil minimum, maksimum, dan rata-rata disimpan dalam file log agregat per jam.
+    - File ini diberi nama `metrics_agg_<datetime>.log`, di mana `<datetime>` mewakili tanggal dan waktu saat ini.
+
+`logika yang saya gunakan diatas adalah mengumpulkan setiap metrik.log yang dihasilkan setiap menit ke dalam sebuah array, yang dimana di dalam array tersebut kita dapat melakukan sorting untuk menemukan value minimum, maximum dan average`
+
+- Tambahkan juga konfigurasi `crontab` pada shell script yang setiap jam.
+```
+crontab -e
+0 * * * * /home/zwaneee/sisop/modul1/soal4/log/hour/aggregate_minutes_to_hourly_log.sh
+```
+`Kami melakukan hal tersebut adalah untuk membuat script aggregate_minutes_to_hourly_log.sh akan berjalan otomatis setiap jamnya atau dalam artian lain, akan mencetak file.log yang diminta soal setiap jam.`
+
+- Karena file log bersifat sensitif pastikan semua file log hanya dapat dibaca oleh user pemilik file. Untuk melengkapi poin ini sangat simple kita hanya perlu menggunakan `chmod 600`
+> `chmod 600 /home/$(whoami)/sisop/modul1/soal4/log/minute/metrics_${datetime}.log`
+
+> `chmod 600 /home/$(whoami)/sisop/modul1/soal4/log/hour/metrics_agg${datetime}.log`
+
+kami hanya perlu menambahkan command tersebut ke setiap shell script yang kami buat diatas.
 
 #### > Dokumentasi
+<img width="1420" alt="image" src="https://github.com/HazwanAdhikara/Sisop-1-2024-MH-IT13/assets/151142830/770f700a-439d-4af7-b6d4-4c55d1d8a98e">
+<img width="1422" alt="image" src="https://github.com/HazwanAdhikara/Sisop-1-2024-MH-IT13/assets/151142830/4399a492-0813-41bc-b833-2a3130dcd386">
+<img width="1421" alt="image" src="https://github.com/HazwanAdhikara/Sisop-1-2024-MH-IT13/assets/151142830/00f77b5f-9be6-4acb-8e13-bb48f8661480">
+<img width="937" alt="image" src="https://github.com/HazwanAdhikara/Sisop-1-2024-MH-IT13/assets/151142830/b2f0be85-2fca-4215-8612-d568ddf1b369">
+<img width="1420" alt="image" src="https://github.com/HazwanAdhikara/Sisop-1-2024-MH-IT13/assets/151142830/f9aee549-d01b-4d78-9c82-646e5181e547">
+
 ---
 ## Kesimpulan 
 ini untuk kesimpulan akhirnya yaa nanti diisi
