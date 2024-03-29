@@ -20,24 +20,27 @@ while true; do
         
         hidden_value=$(steghide extract -sf "$image_file" -p "" 2>/dev/null)
         
-if [[ $? -eq 0 && ! -z "$hidden_value" ]]; then
-    decrypted_value=$(echo "$hidden_value" | xxd -r -p)
-    
-    if is_url "$decrypted_value"; then
-        log_entry "INFO" "URL found: $decrypted_value"
-        
-        wget -O secret_file.txt "$decrypted_value"
+        if [[ $? -eq 0 && ! -z "$hidden_value" ]]; then
+            decrypted_value=$(echo "$hidden_value" | xxd -r -p)
+            
+            if is_url "$decrypted_value"; then
+                log_entry "INFO" "URL found: $decrypted_value"
+                
+                wget -O secret_file.txt "$decrypted_value"
 
-        exit 0
-    fi
-    
-    log_entry "INFO" "Hidden value extracted successfully: $decrypted_value"
-else
-    log_entry "WARNING" "Extraction failed or no hidden value found in $image_file"
-
-    rm -f secret_file.txt
-fi
-
+                exit 0
+            fi
+            
+            decoded_value=$(echo "$decrypted_value" | base64 -d)
+            if [[ ! -z "$decoded_value" ]]; then
+                log_entry "INFO" "Decoded hidden value: $decoded_value"
+            else
+                log_entry "WARNING" "Failed to decode hidden value: $decrypted_value"
+            fi
+        else
+            log_entry "WARNING" "Extraction failed or no hidden value found in $image_file"
+            rm -f secret_file.txt
+        fi
     done
     
     sleep 1
