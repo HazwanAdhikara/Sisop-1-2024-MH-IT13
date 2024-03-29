@@ -1064,5 +1064,3 @@ kami hanya perlu menambahkan command tersebut ke setiap shell script yang kami b
 <img width="1420" alt="image" src="https://github.com/HazwanAdhikara/Sisop-1-2024-MH-IT13/assets/151142830/f9aee549-d01b-4d78-9c82-646e5181e547">
 
 ---
-## Kesimpulan 
-ini untuk kesimpulan akhirnya yaa nanti diisi
