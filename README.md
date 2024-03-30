@@ -22,7 +22,7 @@ Kelompok IT13 juga telah menyelesaikan tugas praktikum modul 1 yang telah diberi
 
 ## Ketentuan
 Struktur Repository Seperti Berikut:
-```
+```bash
 —soal_1:
   	— Sandbox.sh
                                     
@@ -53,7 +53,7 @@ Setiap tahun Cipung dan Abe akan mengadakan rapat dengan kamu untuk mengetahui l
 - Karena ada seseorang yang lapor kepada Cipung dan Abe bahwa pesanannya tidak kunjung sampai, maka mereka ingin mengecek apakah pesanan itu ada. Cari purchase date dan amount (quantity) dari nama adriaens
 
 #### > Penyelesaian
-```
+```bash
 #!/bin/bash
 
 curl -L -o Sandbox.csv 'https://drive.google.com/uc?export=download&id=1cC6MYBI3wRwDgqlFQE1OQUN83JAreId0'
@@ -790,7 +790,7 @@ average,15949,10227,265.5,605,5456,4800,2047,47.5,1999.5,/home/user/coba/,62M
 
 #### > Penyelesaian
 **minute_log.sh**
-```
+```bash
 #!/bin/bash
 
 datetime=$(date "+%Y%m%d%H%M%S")
@@ -812,7 +812,7 @@ chmod 600 /home/$(whoami)/sisop/modul1/soal4/log/minute/metrics_${datetime}.log
 # * * * * * /home/zwaneee/sisop/modul1/soal4/log/minute/minute_log.sh
 ```
 **aggregate_minutes_to_hourly_log.sh**
-```
+```bash
 #!/bin/bash
 
 datetime=$(date "+%Y%m%d%H")
