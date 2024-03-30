@@ -912,11 +912,124 @@ rm -rf list_character.csv
 - Terakhir, skrip menghapus berkas sementara: `genshin.zip`, `genshin_character.zip`, dan `list_character.csv`.
 
 **search.sh**
+1. Definisi fungsi:
+- `is_url()`: Fungsi ini memeriksa apakah string yang diberikan adalah URL yang valid. Fungsi ini menerima satu argumen (string yang akan diperiksa) dan mengembalikan 0 jika string dimulai dengan “http://” atau “https://”, menandakan bahwa itu adalah URL. Jika tidak, fungsi mengembalikan 1.
+- `log_entry()`: Fungsi ini mencatat entri ke file bernama `image.log`. Ia menambahkan timestamp, tingkat log (INFO atau WARNING), dan pesan ke file log.
+```Bash
+#!/bin/bash
 
+# Function to check if a string is a valid URL
+is_url() {
+    url="$1"
+    if [[ "$url" =~ ^https?:// ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
 
-#### > Dokumentasi
+# Function to log an entry to image.log
+log_entry() {
+    log_date=$(date +"%Y-%m-%d %T")
+    echo "[$log_date] $1 $2" >> image.log
+}
+```
 
+2. Loop utama:
+- Skrip memasuki loop tak terbatas menggunakan `while true`.
+- Untuk setiap file gambar dalam direktori `genshin_character/*/*.jpg` (dugaan berisi gambar terkait game “Genshin Impact”), skrip melakukan langkah-langkah berikut:
+- Mencatat pesan INFO yang menunjukkan bahwa skrip sedang memeriksa file gambar tertentu.
+- Mencoba mengekstrak nilai tersembunyi dari gambar menggunakan `steghide`. Flag `-sf` menentukan file gambar, dan `-p ""` menunjukkan passphrase kosong.
+```Bash
+#!/bin/bash
+
+# Function to check if a string is a valid URL
+is_url() {
+    url="$1"
+    if [[ "$url" =~ ^https?:// ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to log an entry to image.log
+log_entry() {
+    log_date=$(date +"%Y-%m-%d %T")
+    echo "[$log_date] $1 $2" >> image.log
+}
+```
+- Jika ekstraksi berhasil dan nilai tersembunyi yang tidak kosong ditemukan:
+- Mendekode nilai tersembunyi dengan asumsi itu dienkripsi dalam format heksadesimal.
+- Memeriksa apakah nilai yang didekode adalah URL yang valid menggunakan fungsi `is_url()`.
+```Bash
+# Check if extraction is successful and hidden value is found
+        if [[ $? -eq 0 && ! -z "$hidden_value" ]]; then
+            # Decrypt the hidden value assuming it's hex encoded
+            decrypted_value=$(echo "$hidden_value" | xxd -r -p)
+            
+            # Check if decrypted value is a valid URL
+            if is_url "$decrypted_value"; then
+                log_entry "INFO" "URL found: $decrypted_value"
+                
+                # Download the file based on the URL
+                wget -O secret_file.txt "$decrypted_value"
+                
+                # Exit the script since the URL is found
+                exit 0
+	    fi
+```
+- Jika itu adalah URL yang valid, mencatat pesan INFO dengan URL tersebut dan mengunduh file yang ditentukan oleh URL ke dalam `secret_file.txt`.
+- Keluar dari skrip karena URL ditemukan.
+- Jika ekstraksi gagal atau tidak ada nilai tersembunyi yang ditemukan, mencatat pesan WARNING dan menghapus `secret_file.txt` jika ada.
+- Skrip kemudian menunggu selama 1 detik sebelum memeriksa lagi.
+```Bash
+else
+            # Extraction failed or no hidden value found
+            log_entry "WARNING" "Extraction failed or no hidden value found in $image_file"
+            
+            # Remove the txt file if it exists
+            rm -f secret_file.txt
+        fi
+    done
+    
+    # Wait for 1 second before checking again
+    sleep 1
+done
+```
 #### > Revisi
+- Dalam soal ini saya tidak menemukan url yang dimaksud pada soal. Akhirnya setelah demo dengan asisten saya melakukan beberapa revisi untuk file search.sh saya. Tepatnya dibagian ini:
+- sebelum revisi
+```Bash
+if Il $? -eq 0 && ! -z "$hidden_value" 11; then
+    decrypted_value=$ (echo "$hidden_value" | xxd -r -p)
+
+    if is _url "$decrypted value"; then
+	log_entry "INFO" "URL found: $decrypted_value"
+	wget -0 secret_file. txt "$decrypted_value"
+	exit 0
+fi
+```
+- setelah revisi
+```Bash
+decoded_value=$ (echo "decrypted_value" | base64 -d)
+	if IL ! -z "$decoded _value" 11; then
+	   log_entry "INFO" "Decoded hidden value: $decoded value"
+	else
+	   log_entry "WARNING" "Failed to decode hidden value: $decrypted va
+
+	fi
+```
+- Dalam kasus in mendekode file.txt yang ditemukan harus menggunakan format Base64.
+Ini berguna agar script yang ada didalam file.txt dapat dikonversi menjadi url yang dinginkan, Dan ternyata file url yang dicari adalah didalam file `lisa.txt`.
+- Isi filenya adalah:
+```Bash
+aHR0cHM6Ly9pLnBpbmltZy5jb20vNDc0eC9lYS9iMC82NS9lYWIwNjU5YmEwNjBiMDYyNGRmNWQyOGI0OTEwYjJmYi5qcGc=
+```
+- Setelah di dekode menggunakan format Base64 menjadi:
+```Bash
+https://i.pinimg.com/474x/ea/b0/65/eab0659ba060b0624df5d28b4910b2fb.jpg
+```
 ---
 ### **`Soal 4`**
 `> Hazwan`
