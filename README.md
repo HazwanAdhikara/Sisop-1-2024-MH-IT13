@@ -766,6 +766,7 @@ Ex:
 1. [24/03/20 17:18:19] [NOT FOUND] [image_path]
 2. [24/03/20 17:18:20] [FOUND] [image_path]
 ```
+#### > Penyelesaian
 **awal.sh**
 ```Bash
 #!/bin/bash
@@ -860,9 +861,58 @@ while true; do
     sleep 1
 done
 ```
-#### > Penyelesaian
-
 #### > Penjelasan
+**awal.sh**
+1. Unduh dan Ekstrak berkas:
+- Skrip dimulai dengan mengunduh berkas bernama `genshin.zip` dari URL yang ditentukan menggunakan perintah `wget`.
+- Selanjutnya, skrip mengekstrak kedua berkas `genshin.zip` dan `genshin_character.zip`.
+```Bash
+#!/bin/bash
+
+wget -O genshin.zip "https://drive.google.com/uc?export=download&id=1oGHdTf4_76_RacfmQIV4i7os4sGwa9vN"
+
+unzip genshin.zip
+unzip genshin_character.zip
+```
+2. Pemrosesan Berkas Gambar:
+- Untuk setiap berkas dengan ekstensi `.jpg` di direktori `genshin_character`:
+- Ekstrak nama dasar (tanpa ekstensi) dari jalur berkas.
+- Ubah nama dasar menggunakan enkoding heksadesimal dan hapus karakter khusus.
+- Ambil informasi (Region, Elemen, dan Senjata) dari berkas `list_character.csv` berdasarkan nama baru.
+- Buat nama berkas baru dengan format: `{Region}-{newname}-{Element}-{Weapon}.jpg`.
+- Pindahkan berkas asli ke subdirektori yang dinamai sesuai dengan Region.
+```Bash
+for filename in genshin_character/*.jpg; do
+    basename=$(basename "$filename" .jpg)
+    newname=$(echo -n "$basename" | xxd -p -r | tr -cd '[:alnum:] [:space:]')
+
+    Region=$(awk -F ',' -v name="$newname" '$1 == name {print $2}' list_character.csv)
+    Elemen=$(awk -F ',' -v name="$newname" '$1 == name {print $3}' list_character.csv)
+    Senjata=$(awk -F ',' -v name="$newname" '$1 == name {print $4}' list_character.csv)
+
+    new_filename=$(echo "${Region}-${newname}-${Elemen}-${Senjata}.jpg" | tr -d '\r')
+
+    mkdir -p "genshin_character/$Region"
+
+    mv "$filename" "genshin_character/$Region/$new_filename"
+
+done
+```
+3. Menghitung jumlah senjata:
+- Skrip kemudian memproses berkas `list_character.csv` (kecuali baris header) untuk menghitung jumlah kemunculan setiap Senjata yang unik.
+- Hasilnya dicetak bersama dengan Senjata yang sesuai.
+```Bash
+tail -n +2 list_character.csv | awk -F ',' '{print $4}' | sort | uniq -c | awk '{print $1,":",$2}'
+
+rm -rf genshin.zip
+rm -rf genshin_character.zip
+rm -rf list_character.csv
+```
+4. Pembersihan:
+- Terakhir, skrip menghapus berkas sementara: `genshin.zip`, `genshin_character.zip`, dan `list_character.csv`.
+
+**search.sh**
+
 
 #### > Dokumentasi
 
