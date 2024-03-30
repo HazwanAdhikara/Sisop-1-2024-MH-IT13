@@ -748,6 +748,8 @@ login_menu
 
 ---
 ### **`Soal 3`**
+`>Andre`
+#### > Isi Soal
 Alyss adalah seorang gamer yang sangat menyukai bermain game Genshin Impact. Karena hobinya, dia ingin mengoleksi foto-foto karakter Genshin Impact. Suatu saat Yanuar memberikannya sebuah Link yang berisi koleksi kumpulan foto karakter dan sebuah clue yang mengarah ke penemuan gambar rahasia. Ternyata setiap nama file telah dienkripsi dengan menggunakan hexadecimal. Karena penasaran dengan apa yang dikatakan Yanuar, Alyss tidak menyerah dan mencoba untuk mengembalikan nama file tersebut kembali seperti semula.
 
 a. Alyss membuat script bernama awal.sh, untuk download file yang diberikan oleh Yanuar dan unzip terhadap file yang telah diunduh dan decode setiap nama file yang terenkripsi dengan hex . Karena pada file list_character.csv terdapat data lengkap karakter, Alyss ingin merename setiap file berdasarkan file tersebut. Agar semakin rapi, Alyss mengumpulkan setiap file ke dalam folder berdasarkan region tiap karakter. `i. Format: Region - Nama - Elemen - Senjata.jpg`
@@ -764,8 +766,100 @@ Ex:
 1. [24/03/20 17:18:19] [NOT FOUND] [image_path]
 2. [24/03/20 17:18:20] [FOUND] [image_path]
 ```
-#### > Isi Soal
+**awal.sh**
+```Bash
+#!/bin/bash
 
+wget -O genshin.zip "https://drive.google.com/uc?export=download&id=1oGHdTf4_76_RacfmQIV4i7os4sGwa9vN"
+
+unzip genshin.zip
+unzip genshin_character.zip
+
+for filename in genshin_character/*.jpg; do
+    # Get basename without path and extension
+    basename=$(basename "$filename" .jpg)
+    # Convert basename to hexadecimal text, then convert back to string
+    newname=$(echo -n "$basename" | xxd -p -r | tr -cd '[:alnum:] [:space:]')
+
+    # Read data from list_character.csv using AWK
+    Region=$(awk -F ',' -v name="$newname" '$1 == name {print $2}' list_character.csv)
+    Elemen=$(awk -F ',' -v name="$newname" '$1 == name {print $3}' list_character.csv)
+    Senjata=$(awk -F ',' -v name="$newname" '$1 == name {print $4}' list_character.csv)
+
+    # Generate new filename format
+    new_filename=$(echo "${Region}-${newname}-${Elemen}-${Senjata}.jpg" | tr -d '\r')
+
+    # Create folder if not exists
+    mkdir -p "genshin_character/$Region"
+
+    # Move the file to corresponding folder
+    mv "$filename" "genshin_character/$Region/$new_filename"
+
+done
+
+tail -n +2 list_character.csv | awk -F ',' '{print $4}' | sort | uniq -c | awk '{print $1,":",$2}'
+
+rm -rf genshin.zip
+rm -rf genshin_character.zip
+rm -rf list_character.csv
+```
+
+**search.sh**
+```Bash
+#!/bin/bash
+
+# Function to check if a string is a valid URL
+is_url() {
+    url="$1"
+    if [[ "$url" =~ ^https?:// ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to log an entry to image.log
+log_entry() {
+    log_date=$(date +"%Y-%m-%d %T")
+    echo "[$log_date] $1 $2" >> image.log
+}
+
+# Loop to check each image file every 1 second
+while true; do
+    for image_file in genshin_character/*/*.jpg; do
+        log_entry "INFO" "Checking $image_file"
+        
+        # Extract hidden value from image using steghide
+        hidden_value=$(steghide extract -sf "$image_file" -p "" 2>/dev/null)
+        
+        # Check if extraction is successful and hidden value is found
+        if [[ $? -eq 0 && ! -z "$hidden_value" ]]; then
+            # Decrypt the hidden value assuming it's hex encoded
+            decrypted_value=$(echo "$hidden_value" | xxd -r -p)
+            
+            # Check if decrypted value is a valid URL
+            if is_url "$decrypted_value"; then
+                log_entry "INFO" "URL found: $decrypted_value"
+                
+                # Download the file based on the URL
+                wget -O secret_file.txt "$decrypted_value"
+                
+                # Exit the script since the URL is found
+                exit 0
+            fi
+        else
+            # Extraction failed or no hidden value found
+            log_entry "WARNING" "Extraction failed or no hidden value found in $image_file"
+            
+            # Remove the txt file if it exists
+            rm -f secret_file.txt
+        fi
+    done
+    
+    # Wait for 1 second before checking again
+    sleep 1
+done
+```
 #### > Penyelesaian
 
 #### > Penjelasan
